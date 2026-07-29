@@ -16,7 +16,7 @@ An expense tracker web app with an AI financial assistant. Users sign up, log in
 
 - **Frontend:** HTML, CSS, JavaScript, EJS templates, Bootstrap
 - **Backend:** Node.js + Express
-- **Database:** SQLite
+- **Database:** PostgreSQL (hosted on Render)
 - **AI:** Google Gemini API
 
 ## Database schema
@@ -27,7 +27,7 @@ An expense tracker web app with an AI financial assistant. Users sign up, log in
 
 **expenses** — id, user_id, category, custom_category, amount, date
 
-## How to run it
+## How to run it locally
 
 1. Clone the repo and go into the folder
    ```bash
@@ -44,7 +44,10 @@ An expense tracker web app with an AI financial assistant. Users sign up, log in
    ```bash
    cp .env.example .env
    ```
-   Then open `.env` and add your own Gemini API key and a random session secret.
+   Then open `.env` and add:
+   - `GEMINI_API_KEY` — your own Gemini API key
+   - `SESSION_SECRET` — any random string
+   - `DATABASE_URL` — a PostgreSQL connection string (e.g. from a free Render Postgres database)
 
 4. Start the server
    ```bash
@@ -52,3 +55,10 @@ An expense tracker web app with an AI financial assistant. Users sign up, log in
    ```
 
 5. Open `http://localhost:3000` in your browser
+
+## Live app
+
+## Live app
+
+- **Deployed app:** https://spend-and-save.onrender.com
+- **GitHub repo:** https://github.com/jenr33/spend-and-save
