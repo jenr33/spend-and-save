@@ -1,5 +1,5 @@
 const express = require('express');
-const db = require('../db/database');
+const pool = require('../db/database');
 const requireLogin = require('../middleware/auth');
 
 const router = express.Router();
@@ -12,13 +12,15 @@ const CATEGORY_COLORS = {
   Other: '#F6B8C6',
 };
 
-function getOrCreateBudget(userId) {
-  let budget = db.prepare('SELECT * FROM budgets WHERE user_id = ?').get(userId);
-  if (!budget) {
-    db.prepare('INSERT INTO budgets (user_id, amount) VALUES (?, 0)').run(userId);
-    budget = db.prepare('SELECT * FROM budgets WHERE user_id = ?').get(userId);
+// Get a user's budget row, creating one (defaulting to $0) if it
+// doesn't exist yet.
+async function getOrCreateBudget(userId) {
+  let result = await pool.query('SELECT * FROM budgets WHERE user_id = $1', [userId]);
+  if (result.rows.length === 0) {
+    await pool.query('INSERT INTO budgets (user_id, amount) VALUES ($1, 0)', [userId]);
+    result = await pool.query('SELECT * FROM budgets WHERE user_id = $1', [userId]);
   }
-  return budget;
+  return result.rows[0];
 }
 
 function displayCategory(expense) {
@@ -54,23 +56,20 @@ async function askGemini(question, expenses) {
   }
 }
 
-// Shared helper: gathers everything the dashboard page needs, including
-// the budget-usage percentage for the donut chart
-function getDashboardData(userId) {
-  const budget = getOrCreateBudget(userId);
-  const expenses = db.prepare('SELECT * FROM expenses WHERE user_id = ?').all(userId);
+async function getDashboardData(userId) {
+  const budget = await getOrCreateBudget(userId);
+  const expensesResult = await pool.query('SELECT * FROM expenses WHERE user_id = $1', [userId]);
+  const expenses = expensesResult.rows;
 
-  const totalExpense = expenses.reduce((sum, e) => sum + e.amount, 0);
-  const remaining = budget.amount - totalExpense;
+  const totalExpense = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
+  const remaining = Number(budget.amount) - totalExpense;
 
   const budgetUsedPercent = budget.amount > 0
-    ? Math.round((totalExpense / budget.amount) * 100)
+    ? Math.round((totalExpense / Number(budget.amount)) * 100)
     : 0;
 
-  // Donut chart math: a circle with radius 80 has a circumference of
-  // ~502.65. We show "percent used" as a colored arc out of the full circle.
   const circumference = 502.65;
-  const cappedPercent = Math.min(budgetUsedPercent, 100); // don't overflow the ring visually
+  const cappedPercent = Math.min(budgetUsedPercent, 100);
   const donutDashArray = `${(cappedPercent / 100 * circumference).toFixed(1)} ${circumference}`;
 
   return {
@@ -83,12 +82,14 @@ function getDashboardData(userId) {
   };
 }
 
-function getSpendingTrend(userId, totalSpending, budgetAmount) {
+async function getSpendingTrend(userId, totalSpending, budgetAmount) {
   const budgetUsedPercent = budgetAmount > 0
     ? Math.round((totalSpending / budgetAmount) * 100)
     : 0;
 
-  const expenses = db.prepare('SELECT * FROM expenses WHERE user_id = ?').all(userId);
+  const expensesResult = await pool.query('SELECT * FROM expenses WHERE user_id = $1', [userId]);
+  const expenses = expensesResult.rows;
+
   const dayLabels = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   const last7Days = [];
 
@@ -99,7 +100,7 @@ function getSpendingTrend(userId, totalSpending, budgetAmount) {
 
     const dayTotal = expenses
       .filter(e => e.date === dateString)
-      .reduce((sum, e) => sum + e.amount, 0);
+      .reduce((sum, e) => sum + Number(e.amount), 0);
 
     last7Days.push({
       label: dayLabels[d.getDay()],
@@ -129,9 +130,9 @@ function getSpendingTrend(userId, totalSpending, budgetAmount) {
   };
 }
 
-router.get('/', requireLogin, (req, res) => {
+router.get('/', requireLogin, async (req, res) => {
   const userId = req.session.user.id;
-  const data = getDashboardData(userId);
+  const data = await getDashboardData(userId);
 
   res.render('planner/dashboard', {
     ...data,
@@ -141,23 +142,27 @@ router.get('/', requireLogin, (req, res) => {
   });
 });
 
-router.post('/', requireLogin, (req, res) => {
+router.post('/', requireLogin, async (req, res) => {
   const userId = req.session.user.id;
   const { budget_amount } = req.body;
-  db.prepare('UPDATE budgets SET amount = ? WHERE user_id = ?').run(budget_amount, userId);
+  await pool.query('UPDATE budgets SET amount = $1 WHERE user_id = $2', [budget_amount, userId]);
   res.redirect('/');
 });
 
-router.get('/transactions', requireLogin, (req, res) => {
+router.get('/transactions', requireLogin, async (req, res) => {
   const userId = req.session.user.id;
-  const expenses = db.prepare('SELECT * FROM expenses WHERE user_id = ? ORDER BY date DESC').all(userId);
+  const expensesResult = await pool.query(
+    'SELECT * FROM expenses WHERE user_id = $1 ORDER BY date DESC',
+    [userId]
+  );
+  const expenses = expensesResult.rows;
 
-  const totalSpending = expenses.reduce((sum, e) => sum + e.amount, 0);
+  const totalSpending = expenses.reduce((sum, e) => sum + Number(e.amount), 0);
 
   const categoryTotals = {};
   expenses.forEach(e => {
     const cat = displayCategory(e);
-    categoryTotals[cat] = (categoryTotals[cat] || 0) + e.amount;
+    categoryTotals[cat] = (categoryTotals[cat] || 0) + Number(e.amount);
   });
 
   const sortedCategories = Object.entries(categoryTotals).sort((a, b) => b[1] - a[1]);
@@ -185,15 +190,15 @@ router.get('/transactions', requireLogin, (req, res) => {
 
   const highestCategory = sortedCategories.length > 0 ? sortedCategories[0][0] : 'N/A';
 
-  const budget = getOrCreateBudget(userId);
-  const remaining = budget.amount - totalSpending;
+  const budget = await getOrCreateBudget(userId);
+  const remaining = Number(budget.amount) - totalSpending;
 
   const expensesWithDisplay = expenses.map(e => ({
     ...e,
     display_category: displayCategory(e),
   }));
 
-  const trend = getSpendingTrend(userId, totalSpending, budget.amount);
+  const trend = await getSpendingTrend(userId, totalSpending, budget.amount);
 
   res.render('planner/transactions', {
     expenses: expensesWithDisplay,
@@ -207,7 +212,7 @@ router.get('/transactions', requireLogin, (req, res) => {
   });
 });
 
-router.get('/calendar', requireLogin, (req, res) => {
+router.get('/calendar', requireLogin, async (req, res) => {
   const userId = req.session.user.id;
 
   const today = new Date();
@@ -225,21 +230,20 @@ router.get('/calendar', requireLogin, (req, res) => {
   const monthName = new Date(year, month, 1).toLocaleString('default', { month: 'long' });
   const monthPrefix = `${year}-${String(month + 1).padStart(2, '0')}`;
 
-  const expenses = db.prepare(
-    "SELECT * FROM expenses WHERE user_id = ? AND date LIKE ?"
-  ).all(userId, `${monthPrefix}%`);
+  const expensesResult = await pool.query(
+    "SELECT * FROM expenses WHERE user_id = $1 AND date LIKE $2",
+    [userId, `${monthPrefix}%`]
+  );
+  const expenses = expensesResult.rows;
 
   const dayTotals = {};
   expenses.forEach(e => {
     if (!dayTotals[e.date]) {
       dayTotals[e.date] = {};
     }
-    dayTotals[e.date][e.category] = (dayTotals[e.date][e.category] || 0) + e.amount;
+    dayTotals[e.date][e.category] = (dayTotals[e.date][e.category] || 0) + Number(e.amount);
   });
 
-  // Step 2: for each day, turn its category totals into proportional
-  // "segments" - e.g. a day with $30 Food and $10 Rent becomes
-  // [{color: food_color, percent: 75}, {color: rent_color, percent: 25}]
   const daySegments = {};
   Object.keys(dayTotals).forEach(date => {
     const categories = Object.entries(dayTotals[date]);
@@ -268,10 +272,10 @@ router.get('/calendar', requireLogin, (req, res) => {
     });
   }
 
-  const budget = getOrCreateBudget(userId);
-  const allExpenses = db.prepare('SELECT * FROM expenses WHERE user_id = ?').all(userId);
-  const totalSpendingAllTime = allExpenses.reduce((sum, e) => sum + e.amount, 0);
-  const trend = getSpendingTrend(userId, totalSpendingAllTime, budget.amount);
+  const budget = await getOrCreateBudget(userId);
+  const allExpensesResult = await pool.query('SELECT * FROM expenses WHERE user_id = $1', [userId]);
+  const totalSpendingAllTime = allExpensesResult.rows.reduce((sum, e) => sum + Number(e.amount), 0);
+  const trend = await getSpendingTrend(userId, totalSpendingAllTime, budget.amount);
 
   res.render('planner/calendar', {
     month_name: monthName,
@@ -284,37 +288,42 @@ router.get('/calendar', requireLogin, (req, res) => {
   });
 });
 
-router.post('/add-expense', requireLogin, (req, res) => {
+router.post('/add-expense', requireLogin, async (req, res) => {
   const userId = req.session.user.id;
   const { category, custom_category, amount, date } = req.body;
   const expenseDate = date || new Date().toISOString().split('T')[0];
 
-  db.prepare(
-    'INSERT INTO expenses (user_id, category, custom_category, amount, date) VALUES (?, ?, ?, ?, ?)'
-  ).run(userId, category, custom_category || '', amount, expenseDate);
+  await pool.query(
+    'INSERT INTO expenses (user_id, category, custom_category, amount, date) VALUES ($1, $2, $3, $4, $5)',
+    [userId, category, custom_category || '', amount, expenseDate]
+  );
 
   res.redirect('/');
 });
 
-router.get('/delete-expense/:id', requireLogin, (req, res) => {
+router.get('/delete-expense/:id', requireLogin, async (req, res) => {
   const userId = req.session.user.id;
-  db.prepare('DELETE FROM expenses WHERE id = ? AND user_id = ?').run(req.params.id, userId);
+  await pool.query('DELETE FROM expenses WHERE id = $1 AND user_id = $2', [req.params.id, userId]);
   res.redirect('/transactions');
 });
 
-router.get('/edit-expense/:id', requireLogin, (req, res) => {
+router.get('/edit-expense/:id', requireLogin, async (req, res) => {
   const userId = req.session.user.id;
-  const expense = db.prepare('SELECT * FROM expenses WHERE id = ? AND user_id = ?').get(req.params.id, userId);
-  res.render('planner/edit-expense', { expense });
+  const result = await pool.query(
+    'SELECT * FROM expenses WHERE id = $1 AND user_id = $2',
+    [req.params.id, userId]
+  );
+  res.render('planner/edit-expense', { expense: result.rows[0] });
 });
 
-router.post('/edit-expense/:id', requireLogin, (req, res) => {
+router.post('/edit-expense/:id', requireLogin, async (req, res) => {
   const userId = req.session.user.id;
   const { category, custom_category, amount, date } = req.body;
 
-  db.prepare(
-    'UPDATE expenses SET category = ?, custom_category = ?, amount = ?, date = ? WHERE id = ? AND user_id = ?'
-  ).run(category, custom_category || '', amount, date, req.params.id, userId);
+  await pool.query(
+    'UPDATE expenses SET category = $1, custom_category = $2, amount = $3, date = $4 WHERE id = $5 AND user_id = $6',
+    [category, custom_category || '', amount, date, req.params.id, userId]
+  );
 
   res.redirect('/transactions');
 });
@@ -322,10 +331,10 @@ router.post('/edit-expense/:id', requireLogin, (req, res) => {
 router.post('/ask-ai', requireLogin, async (req, res) => {
   const userId = req.session.user.id;
   const { question } = req.body;
-  const expenses = db.prepare('SELECT * FROM expenses WHERE user_id = ?').all(userId);
+  const expensesResult = await pool.query('SELECT * FROM expenses WHERE user_id = $1', [userId]);
 
-  const aiResponse = await askGemini(question, expenses);
-  const data = getDashboardData(userId);
+  const aiResponse = await askGemini(question, expensesResult.rows);
+  const data = await getDashboardData(userId);
 
   res.render('planner/dashboard', {
     ...data,

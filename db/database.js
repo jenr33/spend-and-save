@@ -1,34 +1,43 @@
 
 
-const Database = require('better-sqlite3');
-const path = require('path');
+const { Pool } = require('pg');
 
-const db = new Database(path.join(__dirname, '..', 'db.sqlite3'));
 
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE NOT NULL,
-    email TEXT,
-    password TEXT NOT NULL
-  );
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false },
+});
 
-  CREATE TABLE IF NOT EXISTS budgets (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL UNIQUE,
-    amount REAL NOT NULL DEFAULT 0,
-    FOREIGN KEY (user_id) REFERENCES users(id)
-  );
+async function initDb() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+      username TEXT UNIQUE NOT NULL,
+      email TEXT,
+      password TEXT NOT NULL
+    );
+  `);
 
-  CREATE TABLE IF NOT EXISTS expenses (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
-    category TEXT NOT NULL,
-    custom_category TEXT DEFAULT '',
-    amount REAL NOT NULL,
-    date TEXT NOT NULL,
-    FOREIGN KEY (user_id) REFERENCES users(id)
-  );
-`);
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS budgets (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL UNIQUE REFERENCES users(id),
+      amount NUMERIC NOT NULL DEFAULT 0
+    );
+  `);
 
-module.exports = db;
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS expenses (
+      id SERIAL PRIMARY KEY,
+      user_id INTEGER NOT NULL REFERENCES users(id),
+      category TEXT NOT NULL,
+      custom_category TEXT DEFAULT '',
+      amount NUMERIC NOT NULL,
+      date TEXT NOT NULL
+    );
+  `);
+}
+
+initDb().catch(err => console.error('Error setting up database tables:', err));
+
+module.exports = pool;
