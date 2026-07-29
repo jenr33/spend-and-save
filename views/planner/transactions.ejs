@@ -1,0 +1,108 @@
+<%- include('../partials/header') %>
+
+<div class="container mt-4">
+    <h1 class="mb-4">Transactions</h1>
+
+    <!-- Budget used progress bar -->
+    <div class="rounded-4 p-4 mb-4 stat-card">
+        <div class="d-flex justify-content-between mb-2">
+            <span>Budget used</span>
+            <span class="fw-bold"><%= budget_used_percent %>%</span>
+        </div>
+        <div class="progress rounded-pill" style="height: 10px;">
+            <div class="progress-bar rounded-pill <%= budget_used_percent > 100 ? 'bg-over-budget' : 'bg-under-budget' %>"
+                 style="width: <%= Math.min(budget_used_percent, 100) %>%;"></div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <!-- Pie chart card -->
+        <div class="col-md-6 mb-4">
+            <div class="rounded-4 p-4 text-center stat-card">
+                <p class="fw-bold text-start mb-3">Spending by category</p>
+
+                <svg viewBox="0 0 200 200" width="180" height="180" role="img" aria-label="Pie chart of spending by category">
+                    <% chart_data.forEach(function(slice) { %>
+                    <circle
+                        r="80" cx="100" cy="100" fill="transparent"
+                        stroke="<%= slice.color %>" stroke-width="40"
+                        stroke-dasharray="<%= slice.dash_array %>"
+                        stroke-dashoffset="<%= slice.dash_offset %>"
+                        transform="rotate(-90 100 100)" />
+                    <% }); %>
+                    <text x="100" y="96" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="30" font-weight="700" fill="#333">$<%= total_spending %></text>
+                    <text x="100" y="118" text-anchor="middle" font-size="11" fill="#888">total spent</text>
+                </svg>
+
+                <div class="row mt-3 text-start small text-muted">
+                    <% if (chart_data.length === 0) { %>
+                        <p>No expenses yet to chart. Add one from the Home page.</p>
+                    <% } %>
+                    <% chart_data.forEach(function(slice) { %>
+                    <div class="col-6 mb-1">
+                        <span class="d-inline-block rounded-circle me-1" style="width:8px;height:8px;background:<%= slice.color %>;"></span>
+                        <%= slice.category %> (<%= slice.percent %>%)
+                    </div>
+                    <% }); %>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary card -->
+        <div class="col-md-6 mb-4">
+            <div class="rounded-4 p-4 stat-card">
+                <p class="fw-bold mb-3">Spending summary</p>
+
+                <div class="rounded-3 p-3 mb-3 summary-tile">
+                    <p class="small text-muted mb-1">Highest spending category</p>
+                    <p class="fs-5 mb-0"><%= highest_category %></p>
+                </div>
+                <div class="rounded-3 p-3 mb-3 summary-tile">
+                    <p class="small text-muted mb-1">Total spending</p>
+                    <p class="fs-5 mb-0">$<%= total_spending %></p>
+                </div>
+                <div class="rounded-3 p-3 mb-3 summary-tile">
+                    <p class="small text-muted mb-1">Total transactions</p>
+                    <p class="fs-5 mb-0"><%= total_transactions %></p>
+                </div>
+                <div class="rounded-3 p-3 summary-tile">
+                    <p class="small mb-1">Remaining savings</p>
+                    <p class="fs-5 mb-0" style="<%= remaining < 0 ? 'color:#e0654a;' : '' %>">$<%= remaining %></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transaction history table -->
+    <div class="rounded-4 p-4 stat-card">
+        <p class="fw-bold mb-3">Transaction history</p>
+        <table class="table align-middle">
+            <thead>
+    <tr>
+        <th class="table-header-label">Date</th>
+        <th class="table-header-label">Category</th>
+        <th class="table-header-label">Amount</th>
+        <th></th>
+    </tr>
+</thead>
+            <tbody>
+            <% if (expenses.length === 0) { %>
+                <tr><td colspan="4">No transactions yet.</td></tr>
+            <% } %>
+            <% expenses.forEach(function(expense) { %>
+                <tr>
+                    <td><%= expense.date %></td>
+                    <td><%= expense.display_category %></td>
+                    <td>$<%= expense.amount %></td>
+                    <td class="text-end">
+                        <a href="/edit-expense/<%= expense.id %>" class="btn btn-sm btn-outline-brand rounded-pill">Edit</a>
+                        <a href="/delete-expense/<%= expense.id %>" class="btn btn-sm btn-outline-danger rounded-pill">Delete</a>
+                    </td>
+                </tr>
+            <% }); %>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

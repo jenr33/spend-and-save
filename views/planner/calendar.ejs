@@ -1,0 +1,87 @@
+<%- include('../partials/header') %>
+
+<div class="container mt-4">
+    <h1 class="mb-3">Spending calendar</h1>
+
+    <form method="GET" action="/calendar" class="mb-4" style="max-width: 220px;">
+        <select name="month" class="form-select" onchange="this.form.submit()">
+            <% for (let i = -6; i <= 6; i++) { %>
+                <%
+                    const d = new Date();
+                    d.setMonth(d.getMonth() + i);
+                    const value = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+                    const label = d.toLocaleString('default', { month: 'long' }) + ' ' + d.getFullYear();
+                %>
+                <option value="<%= value %>" <%= value === selected_month ? 'selected' : '' %>><%= label %></option>
+            <% } %>
+        </select>
+    </form>
+
+    <div class="row">
+        <div class="col-md-8 mb-4">
+            <div class="border rounded p-4">
+                <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; text-align: center; font-size: 13px; color: #888; margin-bottom: 8px;">
+                    <div>Sun</div>
+                    <div>Mon</div>
+                    <div>Tue</div>
+                    <div>Wed</div>
+                    <div>Thu</div>
+                    <div>Fri</div>
+                    <div>Sat</div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px;">
+                    <% calendar_days.forEach(function(cell) { %>
+                        <% if (cell === null) { %>
+                            <div></div>
+                        <% } else { %>
+                            <div class="calendar-day rounded overflow-hidden position-relative <%= cell.isToday ? 'calendar-day-today' : '' %>">
+                                <!-- Split bar: one strip per category, widths proportional to spending -->
+                                <div class="d-flex h-100 w-100">
+                                    <% cell.segments.forEach(function(seg) { %>
+                                        <div style="width: <%= seg.percent %>%; background-color: <%= seg.color %>;"></div>
+                                    <% }); %>
+                                </div>
+                                <span class="calendar-day-number"><%= cell.day %></span>
+                            </div>
+                        <% } %>
+                    <% }); %>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4 mb-4">
+            <div class="border rounded p-4">
+                <p class="fw-bold small mb-3">Categories</p>
+                <div class="d-flex flex-column gap-2">
+                    <% Object.keys(category_colors).forEach(function(cat) { %>
+                    <div class="d-flex align-items-center gap-2 small">
+                        <span class="d-inline-block rounded" style="width:14px;height:14px;background:<%= category_colors[cat] %>;"></span>
+                        <%= cat %>
+                    </div>
+                    <% }); %>
+                    <div class="d-flex align-items-center gap-2 small">
+                        <span class="d-inline-block rounded" style="width:14px;height:14px;background:#F5F3EE;"></span>
+                        No spending
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 7-day spending trend chart -->
+    <div class="border rounded p-4 mb-4">
+        <p class="mb-3">Spending, last 7 days</p>
+        <svg viewBox="0 0 700 150" style="width: 100%; height: 150px;" preserveAspectRatio="none">
+            <polygon points="<%= area_points %>" fill="#e8f3e2" stroke="none" />
+            <polyline points="<%= line_points %>" fill="none" stroke="#3B6D11" stroke-width="2" />
+        </svg>
+        <div class="d-flex justify-content-between small text-muted mt-1">
+            <% last_7_days.forEach(function(d) { %>
+                <span><%= d.label %></span>
+            <% }); %>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>

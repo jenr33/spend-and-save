@@ -1,0 +1,34 @@
+<%- include('../partials/header') %>
+
+<div class="container mt-5">
+    <h1>Edit Transaction</h1>
+
+    <form method="POST" action="/edit-expense/<%= expense.id %>">
+        <div class="mb-3">
+            <label class="form-label small text-muted">Category</label>
+            <select name="category" class="form-select" required>
+                <option value="Food" <%= expense.category === 'Food' ? 'selected' : '' %>>Food</option>
+                <option value="Rent" <%= expense.category === 'Rent' ? 'selected' : '' %>>Rent</option>
+                <option value="Insurance" <%= expense.category === 'Insurance' ? 'selected' : '' %>>Insurance</option>
+                <option value="Subscription" <%= expense.category === 'Subscription' ? 'selected' : '' %>>Subscription</option>
+                <option value="Other" <%= expense.category === 'Other' ? 'selected' : '' %>>Other</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label class="form-label small text-muted">Custom category</label>
+            <input type="text" name="custom_category" class="form-control" value="<%= expense.custom_category %>" placeholder="e.g. Gym membership">
+        </div>
+        <div class="mb-3">
+            <label class="form-label small text-muted">Amount</label>
+            <input type="number" step="0.01" name="amount" class="form-control" value="<%= expense.amount %>" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label small text-muted">Date</label>
+            <input type="date" name="date" class="form-control" value="<%= expense.date %>" required>
+        </div>
+        <button type="submit" class="btn btn-mockup-green">Save Changes</button>
+        <a href="/transactions" class="btn btn-outline-secondary">Cancel</a>
+    </form>
+</div>
+
+<%- include('../partials/footer') %>

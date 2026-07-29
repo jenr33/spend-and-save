@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Spend & Save</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="container mt-3">
+    <div class="navbar-grid">
+        <a class="navbar-brand text-dark mb-0 fs-4 d-flex align-items-center gap-2" href="/">
+            <span class="brand-icon">$</span> Spend &amp; Save
+        </a>
+
+        <% if (user) { %>
+        <% const activePage = typeof current_page !== 'undefined' ? current_page : ''; %>
+        <div class="nav-pill-outer">
+            <a href="/" class="nav-pill <%= activePage === 'home' ? 'active' : '' %>">Home</a>
+            <a href="/transactions" class="nav-pill <%= activePage === 'transactions' ? 'active' : '' %>">Transactions</a>
+            <a href="/calendar" class="nav-pill <%= activePage === 'calendar' ? 'active' : '' %>">Calendar</a>
+        </div>
+
+        <a href="/logout" class="text-decoration-none ms-auto user-badge">
+            <%= user.username.charAt(0).toUpperCase() %>
+        </a>
+        <% } %>
+    </div>
+
+    

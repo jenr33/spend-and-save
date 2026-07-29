@@ -1,0 +1,267 @@
+
+body {
+    background-color: #EEF1FB;
+}
+
+.brand-icon {
+    background-color: #4F46E5;
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 8px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+}
+
+.navbar-grid {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 12px;
+    padding: 8px 0;
+}
+
+.nav-pill-outer {
+    background-color: white;
+    border-radius: 50px;
+    padding: 6px;
+    display: flex;
+    gap: 4px;
+    justify-self: center;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.nav-pill {
+    padding: 8px 20px;
+    border-radius: 50px;
+    color: #555;
+    text-decoration: none;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.nav-pill:hover {
+    color: #333;
+}
+
+.nav-pill.active {
+    background-color: #4F46E5;
+    color: white;
+    font-weight: 600;
+}
+
+.user-badge {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background-color: #E0E1FA;
+    color: #4F46E5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+}
+
+/* Donut card */
+.donut-card {
+    background: linear-gradient(160deg, #4F46E5, #3730A3);
+}
+
+.donut-label {
+    color: rgba(255, 255, 255, 0.85);
+    letter-spacing: 0.05em;
+}
+
+/* Stat cards */
+.stat-card {
+    background-color: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+}
+
+.stat-icon {
+    background-color: #F1F1FB;
+    width: 36px;
+    height: 36px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+}
+
+.dollar-amount {
+    font-family: Georgia, 'Times New Roman', serif;
+    font-size: 1.9rem;
+    font-weight: 700;
+}
+
+.badge-pill-soft {
+    background-color: #F1F1FB;
+    color: #4F46E5;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 50px;
+}
+
+.badge-pill-warning {
+    background-color: #FDE3DA;
+    color: #C0532F;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 50px;
+}
+
+/* Category pills */
+.category-pill-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+}
+
+.category-pill {
+    background-color: #F1F1FB;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 8px;
+    font-size: 14px;
+    color: #444;
+}
+
+.category-pill.active {
+    background-color: #4F46E5;
+    color: white;
+    font-weight: 600;
+}
+
+/* AI assistant box */
+.assistant-box {
+    background-color: #F6F6FC;
+}
+
+.assistant-icon {
+    background-color: #4F46E5;
+    color: white;
+    width: 30px;
+    height: 30px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+}
+
+.quick-chip {
+    background-color: white;
+    border: 1px solid #E0E1FA;
+    color: #4F46E5;
+    border-radius: 50px;
+    padding: 6px 14px;
+    font-size: 12px;
+}
+
+.quick-chip:hover {
+    background-color: #F1F1FB;
+}
+
+/* Buttons */
+.btn-brand-solid {
+    background-color: #4F46E5;
+    color: white;
+    border: none;
+    font-weight: 600;
+}
+
+.btn-brand-solid:hover {
+    background-color: #4338CA;
+    color: white;
+}
+
+.calendar-day {
+    aspect-ratio: 1;
+    font-size: 13px;
+}
+
+.calendar-day-number {
+    position: absolute;
+    top: 4px;
+    left: 6px;
+    color: #333;
+    font-weight: 600;
+    text-shadow: 0 0 4px rgba(255,255,255,0.8);
+}
+
+.calendar-day-today {
+    outline: 2px solid #333;
+    outline-offset: 1px;
+}
+
+.summary-tile {
+    background-color: #F6F6FC;
+}
+
+.btn-outline-brand {
+    border: 1px solid #4F46E5;
+    color: #4F46E5;
+    background-color: transparent;
+}
+
+.btn-outline-brand:hover {
+    background-color: #4F46E5;
+    color: white;
+}
+
+.table-header-label {
+    text-transform: uppercase;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    color: #999;
+    font-weight: 600;
+    border-bottom: 1px solid #eee;
+}
+
+.auth-card {
+    background-color: white;
+}
+
+.auth-panel-right {
+    background: linear-gradient(160deg, #4F46E5, #3730A3);
+}
+
+.auth-circle {
+    position: absolute;
+    border-radius: 50%;
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.auth-circle-1 {
+    width: 220px;
+    height: 220px;
+    top: -60px;
+    right: -60px;
+}
+
+.auth-circle-2 {
+    width: 260px;
+    height: 260px;
+    bottom: -100px;
+    left: -80px;
+}
+
+.auth-label {
+    color: #4F46E5;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.auth-input {
+    background-color: #F6F6FC;
+    border: 1px solid #E5E5F5;
+    padding: 10px 14px;
+}
+
+.auth-input:focus {
+    border-color: #4F46E5;
+    box-shadow: 0 0 0 0.2rem rgba(79, 70, 229, 0.15);
+}

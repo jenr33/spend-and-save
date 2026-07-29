@@ -1,0 +1,45 @@
+<%- include('../partials/header') %>
+
+<div class="d-flex justify-content-center align-items-center" style="min-height: 75vh;">
+    <div class="rounded-4 shadow-sm overflow-hidden auth-card" style="max-width: 900px; width: 100%;">
+        <div class="row g-0">
+            <div class="col-md-7 p-5">
+                <h2 class="fw-bold mb-1">Create your account</h2>
+                <p class="text-muted mb-4">Start tracking your spending in minutes.</p>
+
+                <% if (error) { %>
+                    <div class="alert alert-danger"><%= error %></div>
+                <% } %>
+
+                <form method="POST" action="/signup">
+                    <div class="mb-3">
+                        <label class="form-label auth-label">Username</label>
+                        <input type="text" name="username" class="form-control auth-input" placeholder="yourname" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label auth-label">Email address</label>
+                        <input type="email" name="email" class="form-control auth-input" placeholder="you@example.com" required>
+                    </div>
+                    <div class="mb-4">
+                        <label class="form-label auth-label">Password</label>
+                        <input type="password" name="password" class="form-control auth-input" required>
+                    </div>
+                    <button type="submit" class="btn btn-brand-solid w-100 py-2">Sign up</button>
+                </form>
+            </div>
+            <div class="col-md-5 auth-panel-right d-flex flex-column justify-content-center align-items-center text-center text-white p-5 position-relative overflow-hidden">
+                <div class="auth-circle auth-circle-1"></div>
+                <div class="auth-circle auth-circle-2"></div>
+
+                <div class="rounded-circle bg-white d-flex justify-content-center align-items-center mb-3" style="width: 70px; height: 70px; z-index: 1;">
+                    <span class="fs-2 fw-bold" style="color: #4F46E5;">$</span>
+                </div>
+                <h3 class="fw-bold" style="z-index: 1;">Spend &amp; Save</h3>
+                <p class="mt-4 mb-2" style="z-index: 1; opacity: 0.85;">Already have an account?</p>
+                <a href="/login" class="btn btn-outline-light rounded-pill px-4" style="z-index: 1;">Log in</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<%- include('../partials/footer') %>
